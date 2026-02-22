@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Spam Detector</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: #000;
+        min-height: 100vh;
+        color: #fff;
+        padding: 30px 20px;
+      }
+      .container {
+        max-width: 820px;
+        margin: 0 auto;
+      }
+      header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+      header h1 {
+        font-size: 2.6rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #00cfff, #0066ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      header p {
+        color: #4a9eff;
+        margin-top: 8px;
+        font-size: 1.05rem;
+      }
+      .card {
+        background: #0a0a0a;
+        border: 1px solid #003a6e;
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 24px;
+        box-shadow: 0 0 30px rgba(0, 150, 255, 0.08);
+      }
+      textarea {
+        width: 100%;
+        height: 160px;
+        background: #050505;
+        border: 2px solid #003a6e;
+        border-radius: 12px;
+        color: #fff;
+        font-size: 1rem;
+        padding: 16px;
+        resize: vertical;
+        transition: 0.3s;
+      }
+      textarea:focus {
+        outline: none;
+        border-color: #00cfff;
+        box-shadow: 0 0 15px rgba(0, 207, 255, 0.2);
+      }
+      textarea::placeholder {
+        color: #1a3a5c;
+      }
+      .btn-row {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+      }
+      button {
+        padding: 14px 32px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #0066ff, #00cfff);
+        color: #fff;
+        flex: 1;
+      }
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 150, 255, 0.4);
+      }
+      .btn-clear {
+        background: #0a0f1a;
+        color: #4a9eff;
+        border: 1px solid #003a6e;
+      }
+      .btn-clear:hover {
+        background: #001a33;
+      }
+      .samples h3 {
+        font-size: 0.85rem;
+        color: #1a5a8a;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+        margin-top: 20px;
+      }
+      .sample-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .chip {
+        background: #050d1a;
+        border: 1px solid #003a6e;
+        border-radius: 20px;
+        padding: 6px 14px;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: 0.2s;
+        color: #4a9eff;
+      }
+      .chip:hover {
+        background: rgba(0, 150, 255, 0.15);
+        border-color: #00cfff;
+        color: #00cfff;
+        box-shadow: 0 0 10px rgba(0, 207, 255, 0.2);
+      }
+      .result-badge {
+        font-size: 2.5rem;
+        font-weight: 900;
+        text-align: center;
+        padding: 20px;
+        border-radius: 16px;
+        margin-bottom: 20px;
+        animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      @keyframes popIn {
+        from {
+          transform: scale(0.5);
+          opacity: 0;
+        }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      .spam-badge {
+        background: rgba(255, 50, 50, 0.08);
+        color: #ff4444;
+        border: 2px solid rgba(255, 50, 50, 0.3);
+        box-shadow: 0 0 20px rgba(255, 50, 50, 0.15);
+      }
+      .ham-badge {
+        background: rgba(0, 207, 255, 0.08);
+        color: #00cfff;
+        border: 2px solid rgba(0, 207, 255, 0.3);
+        box-shadow: 0 0 20px rgba(0, 207, 255, 0.15);
+      }
+      .conf-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        font-size: 0.9rem;
+        color: #4a9eff;
+      }
+      .conf-bar {
+        height: 8px;
+        background: #050d1a;
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid #003a6e;
+      }
+      .conf-fill {
+        height: 100%;
+        border-radius: 6px;
+        transition: width 1s ease;
+        background: linear-gradient(90deg, #0066ff, #00cfff);
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+        margin-top: 20px;
+      }
+      .stat-box {
+        background: #050d1a;
+        border: 1px solid #003a6e;
+        border-radius: 12px;
+        padding: 14px;
+        text-align: center;
+        transition: 0.2s;
+      }
+      .stat-box:hover {
+        border-color: #00cfff;
+        box-shadow: 0 0 15px rgba(0, 207, 255, 0.1);
+      }
+      .stat-val {
+        font-size: 1.6rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #0066ff, #00cfff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .stat-key {
+        font-size: 0.75rem;
+        color: #1a5a8a;
+        margin-top: 4px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .triggers {
+        margin-top: 18px;
+      }
+      .triggers h4 {
+        font-size: 0.85rem;
+        color: #1a5a8a;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .trigger-word {
+        display: inline-block;
+        background: rgba(255, 50, 50, 0.08);
+        border: 1px solid rgba(255, 50, 50, 0.3);
+        color: #ff4444;
+        border-radius: 6px;
+        padding: 3px 10px;
+        font-size: 0.82rem;
+        margin: 3px;
+        font-weight: 600;
+      }
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 30px;
+      }
+      .spinner {
+        width: 44px;
+        height: 44px;
+        border: 3px solid #003a6e;
+        border-top-color: #00cfff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 12px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      #result {
+        display: none;
+      }
+
+      /* Glow line on top of cards */
+      .card::before {
+        content: "";
+        display: block;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #00cfff, transparent);
+        margin-bottom: 28px;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🛡️ AI Spam Detector</h1>
+        <p>Powered by Machine Learning — Naive Bayes + TF-IDF + NLP</p>
+      </header>
+
+      <div class="card">
+        <textarea
+          id="email-input"
+          placeholder="Paste your email or SMS here...&#10;Press Ctrl+Enter to analyze!"
+        ></textarea>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="detect()">
+            🔍 Analyze Email
+          </button>
+          <button class="btn-clear" onclick="clearAll()">✕ Clear</button>
+        </div>
+        <div class="samples">
+          <h3>Try a sample</h3>
+          <div class="sample-chips">
+            <span class="chip" onclick="loadSample(this)"
+              >🚫 Claim your free prize now!</span
+            >
+            <span class="chip" onclick="loadSample(this)"
+              >🚫 Earn $5000 per week from home!</span
+            >
+            <span class="chip" onclick="loadSample(this)"
+              >🚫 URGENT: Account suspended. Verify now!</span
+            >
+            <span class="chip" onclick="loadSample(this)"
+              >✅ Meeting rescheduled to 3 PM Friday</span
+            >
+            <span class="chip" onclick="loadSample(this)"
+              >✅ Can you review my pull request?</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p style="color: #4a9eff">Analyzing with AI...</p>
+      </div>
+
+      <div class="card" id="result">
+        <div class="result-badge" id="result-badge"></div>
+        <div class="conf-label">
+          <span>Spam Probability</span>
+          <span id="conf-pct"></span>
+        </div>
+        <div class="conf-bar">
+          <div class="conf-fill" id="conf-fill" style="width: 0%"></div>
+        </div>
+        <div class="stats" id="stats"></div>
+        <div class="triggers" id="triggers-section" style="display: none">
+          <h4>⚠️ Spam Trigger Words Found</h4>
+          <div id="trigger-words"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function loadSample(el) {
+        document.getElementById("email-input").value = el.textContent
+          .replace("🚫 ", "")
+          .replace("✅ ", "");
+        document.getElementById("result").style.display = "none";
+      }
+      function clearAll() {
+        document.getElementById("email-input").value = "";
+        document.getElementById("result").style.display = "none";
+      }
+      async function detect() {
+        const text = document.getElementById("email-input").value.trim();
+        if (!text) {
+          alert("Please enter some text first.");
+          return;
+        }
+        document.getElementById("result").style.display = "none";
+        document.getElementById("loading").style.display = "block";
+        try {
+          const res = await fetch("/predict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
+          });
+          const data = await res.json();
+          showResult(data);
+        } catch (e) {
+          alert("Error connecting to server.");
+        } finally {
+          document.getElementById("loading").style.display = "none";
+        }
+      }
+      function showResult(d) {
+        const badge = document.getElementById("result-badge");
+        badge.textContent = d.is_spam
+          ? "🚫 SPAM DETECTED"
+          : "✅ LOOKS SAFE (HAM)";
+        badge.className =
+          "result-badge " + (d.is_spam ? "spam-badge" : "ham-badge");
+        document.getElementById("conf-pct").textContent = d.confidence + "%";
+        document.getElementById("conf-fill").style.width = d.confidence + "%";
+        const f = d.features;
+        document.getElementById("stats").innerHTML = `
+    <div class="stat-box">
+      <div class="stat-val">${d.confidence}%</div>
+      <div class="stat-key">Confidence</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">${d.word_count}</div>
+      <div class="stat-key">Words</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">${f.exclaim_count}</div>
+      <div class="stat-key">Exclamations</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">${f.has_url ? "Yes" : "No"}</div>
+      <div class="stat-key">Has URL</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">${f.has_money ? "Yes" : "No"}</div>
+      <div class="stat-key">Has Money</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">${f.has_caps ? "Yes" : "No"}</div>
+      <div class="stat-key">All-Caps</div>
+    </div>
+  `;
+        const tsec = document.getElementById("triggers-section");
+        if (d.triggers.length > 0) {
+          tsec.style.display = "";
+          document.getElementById("trigger-words").innerHTML = d.triggers
+            .map((w) => `<span class="trigger-word">${w}</span>`)
+            .join("");
+        } else {
+          tsec.style.display = "none";
+        }
+        document.getElementById("result").style.display = "block";
+      }
+      document.addEventListener("keydown", (e) => {
+        if (e.ctrlKey && e.key === "Enter") detect();
+      });
+    </script>
+  </body>
+</html>
